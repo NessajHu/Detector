@@ -11,7 +11,7 @@ This application is for a system that can monitor some outdoors devices to avoid
 Detector can warning when the device occurres expcetion.
 For example accelertion or angle of some devices is out of normal range.   
 
-##Function:
+## Function:
 1. Warning.
 2. Draw a curve.
 3. Display current data(related to 2).
