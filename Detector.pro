@@ -53,3 +53,6 @@ HEADERS += \
 
 SUBDIRS += \
     Detector.pro
+
+DISTFILES += \
+    README.md
