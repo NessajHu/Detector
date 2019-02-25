@@ -4,8 +4,17 @@
 #include <Qwt/qwt_plot_panner.h>
 #include <Qwt/qwt_plot_item.h>
 #include <Qwt/qwt_legend.h>
+#ifdef QT_DEBUG
 #include <QDebug>
+#endif
 #include "datahandle.h"
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+#include "mainwindow.h"
+#include <QMessageBox>
+
+const int DataWave::maxDisplayPoints = 2000;
 
 DataWave::DataWave(QWidget *parent) :
     QWidget(parent),
@@ -22,8 +31,9 @@ DataWave::DataWave(QWidget *parent) :
     driftAngelCurve(new QwtPlotCurve("driftAngel")),
     legend(new QwtLegend(this)),
     dataWaveLayout(new QGridLayout(this)),
-    now(0),
-    nowSocketDescriptor(0)
+    nowDisplayPoints(0),
+    nowSocketDescriptor(0),
+    nowNodeDescriptor(0x7FFFFFFF)
 {
     //canvas->setPalette(Qt::white);
     dataWaveLayout->addWidget(plot, 0, 0, 1, 1);
@@ -59,12 +69,9 @@ DataWave::DataWave(QWidget *parent) :
     pitchAngelCurve->attach(plot);
     driftAngelCurve->setPen(QColor(105, 105, 105), 2);
     driftAngelCurve->attach(plot);
-
-
-
-    QwtPlotMagnifier *magnifier = new QwtPlotMagnifier(plot->canvas());
+    [[maybe_unused]] QwtPlotMagnifier *magnifier = new QwtPlotMagnifier(plot->canvas());
     //magnifier (rooler zoom)
-    QwtPlotPanner *panner = new QwtPlotPanner(plot->canvas());
+    [[maybe_unused]] QwtPlotPanner *panner = new QwtPlotPanner(plot->canvas());
     //panner (drag)
     legend->setDefaultItemMode(QwtLegendData::Checkable);
     //makes lefend button checkabke
@@ -87,7 +94,6 @@ DataWave::DataWave(QWidget *parent) :
 
 void DataWave::showItemChecked(const QVariant &itemInfo, bool on)
 {
-    qDebug() << "test";
     QwtPlotItem *plotItem = plot->infoToItem(itemInfo);
     if(plotItem)
             plotItem->setVisible(on);
@@ -96,72 +102,101 @@ void DataWave::showItemChecked(const QVariant &itemInfo, bool on)
 
 DataWave::~DataWave()
 {
-
 }
+
+/**
+ * @brief DataWave::getData
+ * get Data from lower computer. Draw Curves. Insert to database
+ * @param socketDescriptor
+ * @param data
+ */
+
 
 void DataWave::getData(int socketDescriptor, QString data)
 {
     DataHandle handler(data);
+#ifdef QT_DEBUG
     qDebug() << "already recive";
+#endif
+    bool clearFlag = false;
     if(socketDescriptor != nowSocketDescriptor && nowSocketDescriptor != 0)
     {
-        now = 0;
-        {
-            QPolygonF temp;
-            temp.swap(accelerationXPoint);
-        }
-        {
-            QPolygonF temp;
-            temp.swap(accelerationYPoint);
-        }
-        {
-            QPolygonF temp;
-            temp.swap(accelerationZPoint);
-        }
-        {
-            QPolygonF temp;
-            temp.swap(gyroscopeXPoint);
-        }
-        {
-            QPolygonF temp;
-            temp.swap(gyroscopeYPoint);
-        }
-        {
-            QPolygonF temp;
-            temp.swap(gyroscopeZPoint);
-        }
-        {
-            QPolygonF temp;
-            temp.swap(rollAngelPoint);
-        }
-        {
-            QPolygonF temp;
-            temp.swap(pitchAngelPoint);
-        }
-        {
-            QPolygonF temp;
-            temp.swap(driftAngelPoint);
-        }
+        nowSocketDescriptor = socketDescriptor;
+        clearFlag = true;
     }
-    now += 1;
-    accelerationXPoint << QPointF(now, handler.getData()[1]);
+    if(nowNodeDescriptor != static_cast<int>(handler.getData()[0]))
+    {
+        nowNodeDescriptor = static_cast<int>(handler.getData()[0]);
+        clearFlag = true;
+    }
+    if(clearFlag)
+    {
+        nowDisplayPoints = 0;
+        accelerationXPoint.clear();
+        accelerationYPoint.clear();
+        accelerationZPoint.clear();
+        gyroscopeXPoint.clear();
+        gyroscopeYPoint.clear();
+        gyroscopeZPoint.clear();
+        rollAngelPoint.clear();
+        pitchAngelPoint.clear();
+        driftAngelPoint.clear();
+    }
+    nowDisplayPoints += 1;
+    if(nowDisplayPoints >= maxDisplayPoints)
+    {
+        accelerationXPoint.erase(accelerationXPoint.begin());
+        accelerationYPoint.erase(accelerationYPoint.begin());
+        accelerationZPoint.erase(accelerationZPoint.begin());
+        gyroscopeXPoint.erase(gyroscopeXPoint.begin());
+        gyroscopeYPoint.erase(gyroscopeYPoint.begin());
+        gyroscopeZPoint.erase(gyroscopeZPoint.begin());
+        rollAngelPoint.erase(rollAngelPoint.begin());
+        pitchAngelPoint.erase(pitchAngelPoint.begin());
+        driftAngelPoint.erase(driftAngelPoint.begin());
+    }
+    QSqlDatabase database = MainWindow::getDatabase();
+    QSqlQuery insertQuery(database);
+    QString dateTime = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz");
+    QString insertQueryString = QString("insert into log (time, node, accelerationX,  accelerationY, accelerationZ, temperature, gyroscopeX, gyroscopeY, gyroscopeZ, rollAngel, pitchAngel, driftAngel)"
+                            "values('%1', %2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12)")
+            .arg(dateTime)
+            .arg(nowNodeDescriptor)
+            .arg(static_cast<int>(handler.getData()[1]))
+            .arg(static_cast<int>(handler.getData()[2]))
+            .arg(static_cast<int>(handler.getData()[3]))
+            .arg(handler.getData()[4])
+            .arg(static_cast<int>(handler.getData()[5]))
+            .arg(static_cast<int>(handler.getData()[6]))
+            .arg(static_cast<int>(handler.getData()[7]))
+            .arg(handler.getData()[8])
+            .arg(handler.getData()[9])
+            .arg(handler.getData()[10]);
+    if(!insertQuery.exec(insertQueryString))
+        QMessageBox::critical(nullptr, QString::fromUtf8("Insert Failed"), insertQuery.lastError().text());
+#ifdef QT_DEBUG
+    else {
+        qDebug() << "insert Success";
+    }
+#endif
+    accelerationXPoint << QPointF(nowDisplayPoints, handler.getData()[1]);
     accelerationXCurve->setSamples(accelerationXPoint);
-    accelerationYPoint << QPointF(now, handler.getData()[2]);
+    accelerationYPoint << QPointF(nowDisplayPoints, handler.getData()[2]);
     accelerationYCurve->setSamples(accelerationXPoint);
-    accelerationZPoint << QPointF(now, handler.getData()[3]);
+    accelerationZPoint << QPointF(nowDisplayPoints, handler.getData()[3]);
     accelerationZCurve->setSamples(accelerationXPoint);
-    gyroscopeXPoint << QPointF(now, handler.getData()[5]);
+    gyroscopeXPoint << QPointF(nowDisplayPoints, handler.getData()[5]);
     gyroscopeXCurve->setSamples(accelerationXPoint);
-    gyroscopeZPoint << QPointF(now, handler.getData()[6]);
+    gyroscopeZPoint << QPointF(nowDisplayPoints, handler.getData()[6]);
     gyroscopeZCurve->setSamples(accelerationXPoint);
-    gyroscopeYPoint << QPointF(now, handler.getData()[7]);
+    gyroscopeYPoint << QPointF(nowDisplayPoints, handler.getData()[7]);
     gyroscopeYCurve->setSamples(accelerationXPoint);
-    rollAngelPoint << QPointF(now, handler.getData()[8]);
+    rollAngelPoint << QPointF(nowDisplayPoints, handler.getData()[8]);
     rollAngelCurve->setSamples(rollAngelPoint);
-    pitchAngelPoint << QPointF(now, handler.getData()[9]);
+    pitchAngelPoint << QPointF(nowDisplayPoints, handler.getData()[9]);
     pitchAngelCurve->setSamples(pitchAngelPoint);
-    driftAngelPoint << QPointF(now, handler.getData()[10]);
+    driftAngelPoint << QPointF(nowDisplayPoints, handler.getData()[10]);
     driftAngelCurve->setSamples(driftAngelPoint);
-    plot->setAxisScale(QwtPlot::xBottom, 0, now + 5);
+    plot->setAxisScale(QwtPlot::xBottom, 0, nowDisplayPoints + 5);
     plot->replot();
 }

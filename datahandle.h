@@ -15,6 +15,7 @@ public:
 private:
     static const QRegExp dataRegExp;
     QVector<double> data;
+    static const int dataSize;
 };
 
 #endif // DATAHANDLE_H

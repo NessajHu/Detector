@@ -82,10 +82,12 @@ DataDisplay::DataDisplay(QWidget *parent) :
 
 void DataDisplay::currentSocketChanged(QTcpSocket *currentSocket)
 {
+#ifdef QT_DEBUG
     if(currentSocket != nullptr)
         qDebug() << "this is datadisplay calling" << currentSocket->socketDescriptor();
     else
         qDebug() << "there is no socket linking to the server";
+#endif
 }
 
 DataDisplay::~DataDisplay()
@@ -109,7 +111,7 @@ void DataDisplay::currentNodeChanged(int index)
     driftAngel->setText("");
 }
 
-void DataDisplay::getData(int socketDescriptor, QString data)
+void DataDisplay::getData([[maybe_unused]] int socketDescriptor, QString data)
 {
     DataHandle handler(data);
     int node = static_cast<int>(handler.getData()[0]);

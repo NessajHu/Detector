@@ -10,7 +10,7 @@ class TcpServer : public QTcpServer
     Q_OBJECT
 public:
     TcpServer(QObject *parent = nullptr);
-    ~TcpServer();
+    ~TcpServer() override;
     QMap<qintptr, QTcpSocket*> linkList;
     //QMap<qintptr, QString> stringList;
     int getClientNum();

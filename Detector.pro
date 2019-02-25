@@ -10,8 +10,13 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 CONFIG += qwt
 DEFINES += QT_DLL QWT_DLL
 INCLUDEPATH += D:\Qt5.10.0\5.10.0\mingw53_32\include\Qwt\
-LIBS += -lqwt
-LIBS += -lqwtd
+CONFIG += debug_and_release
+CONFIG(debug, debug|release){
+    LIBS += -lqwtd
+}else{
+    LIBS += -lqwt
+}
+
 TARGET = Detector
 TEMPLATE = app
 
@@ -50,6 +55,7 @@ HEADERS += \
     historicaldata.h \
     mainwindow.h \
     datahandle.h \
+    systemoption.h
 
 SUBDIRS += \
     Detector.pro

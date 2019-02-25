@@ -10,18 +10,22 @@ TcpServer::TcpServer(QObject *parent) :
     setMaxPendingConnections(50);
 }
 
+/**
+ * @brief TcpServer::incomingConnection
+ * when incomming connection
+ * if the pending socket > maxpending connection, do not connect
+ * if it is repeated socket, abort the socket
+ * else add it into linklist whose type is QTcpSocket*
+ * connect two slots
+ * emit one incomming connection signal, which wants system option receive
+ * @param socketDescriptor
+ */
 
 void TcpServer::incomingConnection(qintptr socketDescriptor)
 {
-    /*
-     * when incomming connection
-     * if the pending socket > maxpending connection, do not connect
-     * if it is repeated socket, abort the socket
-     * else add it into linklist whose type is QTcpSocket*
-     * connect two slots
-     * emit one incomming connection signal, which wants system option receive
-    */
+#ifdef QT_DEBUG
     qDebug() << "success";
+#endif
     if(linkList.size() <= maxPendingConnections())
     {
         QTcpSocket *socket = new QTcpSocket(this);
@@ -33,7 +37,9 @@ void TcpServer::incomingConnection(qintptr socketDescriptor)
             clientNum++;
             QObject::connect(socket, &QTcpSocket::stateChanged, [=](){disconnectSocket(socketDescriptor);});
             QObject::connect(socket, &QTcpSocket::readyRead, [=](){readData(socketDescriptor);});
+#ifdef QT_DEBUG
             qDebug() << "success";
+#endif
             emit newSocketConnected(socketDescriptor);
             //to prevent repeated socker linked
         }
@@ -42,11 +48,14 @@ void TcpServer::incomingConnection(qintptr socketDescriptor)
     }
 }
 
+/**
+ * @brief TcpServer::readData
+ * use the given socket descriptor, return the buffer of the socket
+ * @param socketDescriptor
+ */
+
 void TcpServer::readData(qintptr socketDescriptor)
 {
-    /*
-     * use the given socket descriptor, return the buffer of the socket
-    */
     qDebug() << "already in";
     QString buffer = QString(linkList[socketDescriptor]->readAll());
     qDebug() << buffer;

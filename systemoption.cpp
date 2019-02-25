@@ -35,14 +35,11 @@ SystemOption::SystemOption(QWidget *parent) :
     comButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
     comButton->setText("Open COM");
     comStatusLabel->setText("COM Status");
-    comStatus->setText("Uncoonected");
+    comStatus->setText("Unconnected");
     ipLabel->setText("IP Address");
     portLabel->setText("Port");
     getIp->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
     getIp->setFocusPolicy(Qt::NoFocus);
-    /*
-     * two signal connected to the slots
-    */
     QObject::connect(server, &TcpServer::newSocketConnected, this, &SystemOption::comboBoxAddItem);
     QObject::connect(server, &TcpServer::socketDisconnected, this, &SystemOption::comboBoxDeleteItem);
     getPort->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
@@ -92,7 +89,7 @@ void SystemOption::newlisten()
     if(server->isListening())
         server->close();
     port = getPort->text().toInt();
-    server->listen(QHostAddress::Any, port);
+    server->listen(QHostAddress::Any, static_cast<quint16>(port));
 }
 
 SystemOption::~SystemOption()

@@ -2,7 +2,6 @@
 #include <login.h>
 #include <menu.h>
 #include <systemoption.h>
-#include <systemoptioncontroller.h>
 #include <datadisplay.h>
 #include <measureddata.h>
 #include <datawave.h>
@@ -17,6 +16,7 @@ int main(int argc, char *argv[])
     MainWindow w(nullptr);
     //HistoricalData historicalData(&w, nullptr);
     //historicalData.hide();
+    
     w.show();
     return a.exec();
 }

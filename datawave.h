@@ -9,6 +9,7 @@
 #include <QPolygonF>
 #include <QFont>
 #include <QGridLayout>
+#include <QPointer>
 
 class DataWave : public QWidget
 {
@@ -16,8 +17,9 @@ class DataWave : public QWidget
 public:
     explicit DataWave(QWidget *parent = nullptr);
     ~DataWave();
+private:
     QwtPlot *plot;
-    QwtPlotCanvas *canvas;
+    QPointer<QwtPlotCanvas> canvas;
     QwtPlotCurve *accelerationXCurve;
     QPolygonF accelerationXPoint;
     QwtPlotCurve *accelerationYCurve;
@@ -39,9 +41,10 @@ public:
     QwtLegend *legend;
     QFont legendFont;
     QGridLayout *dataWaveLayout;
-    int now;
-    int nowSocketDescriptor;
-    //it may be deleted
+    int nowDisplayPoints;
+    int nowSocketDescriptor;//it may be deleted
+    int nowNodeDescriptor;
+    static const int maxDisplayPoints;
 signals:
 
 public slots:

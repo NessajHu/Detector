@@ -1,25 +1,20 @@
 ﻿#ifndef SYSTEMOPTION_H
 #define SYSTEMOPTION_H
 
-#include <basewidget.h>
 #include <QWidget>
 #include <QLabel>
 #include <QComboBox>
 #include <QLineEdit>
 #include <QPushButton>
-#include <systemoptioncontroller.h>
 #include "tcpserver.h"
 #include <QGridLayout>
 #include <QTcpSocket>
-
-class SystemOptionController;
 
 class SystemOption : public QWidget
 {
     Q_OBJECT
 public:
     SystemOption(QWidget *parent = nullptr);
-    friend class SystemOptionController;
     int getCurrentSocketDescriptor() const;
     TcpServer* getServer();
     ~SystemOption();

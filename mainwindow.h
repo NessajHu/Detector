@@ -17,6 +17,7 @@ class MainWindow : public QWidget
     Q_OBJECT
 public:
     explicit MainWindow(QWidget *parent = nullptr);
+    static QSqlDatabase& getDatabase();
     ~MainWindow();
 public slots:
 
@@ -25,12 +26,12 @@ private:
     DataDisplay *dataDisplay;
     DataWave *dataWave;
     StatusAnalysis *statusAnalysis;
-    HistoricalData *historyData;
+    QPointer<HistoricalData> historyData;
     QFont mainWindowFont;
     QGridLayout *mainWindowLayout;
     static QString databaseConnection;
-    QSqlDatabase database;
-    void databaseInit();
+    static QSqlDatabase database;
+    static void databaseInit();
 };
 
 #endif // MAINWINDOW_H

@@ -2,6 +2,7 @@
 #include <QMessageBox>
 #include <QtSql/QSqlQuery>
 #include <QDebug>
+#include <QSqlError>
 
 QString MainWindow::databaseConnection = "DetectorConnection";
 
@@ -11,8 +12,8 @@ MainWindow::MainWindow(QWidget *parent) :
     dataDisplay(new DataDisplay(this)),
     dataWave(new DataWave(this)),
     statusAnalysis(new StatusAnalysis(this)),
-    mainWindowLayout(new QGridLayout(this)),
-    historyData(new HistoricalData(nullptr))
+    historyData(new HistoricalData(nullptr)),
+    mainWindowLayout(new QGridLayout(this))
 {
     resize(800, 600);
     mainWindowFont.setFamily("Microsoft YaHei");
@@ -61,38 +62,45 @@ void MainWindow::databaseInit()
     {
         QSqlQuery tableExistQuery(database);
         if(tableExistQuery.exec("select count(*) from sqlite_master where type = 'table' and name = 'log'"))
+        //if false, it means the query is failed.
         {
             while(tableExistQuery.next())
             {
-                if(tableExistQuery.value(0).toInt() == 0)
+                if(tableExistQuery.value(0).toInt() == 0)//value == 0 means there is no table called log.
                 {
                     QSqlQuery createQuery(database);
-                    if(!createQuery.exec("create table log(id integer primary key autoincrement, time datatime not null, node smallint not null, accelerationX smallint not null, accelerationY smallint not null, accerationZ smallint not null, temperature float not null, gyroscopeX smallint not null, gyroscopeY smallint not null, gyroscopeZ smallint not null, rollAngel float not null, pitchAngel float not null, drift Angel float not null)"))
+                    if(!createQuery.exec("create table log(id integer primary key autoincrement, time datatime not null, node smallint not null, accelerationX smallint not null, accelerationY smallint not null, accelerationZ smallint not null, temperature float not null, gyroscopeX smallint not null, gyroscopeY smallint not null, gyroscopeZ smallint not null, rollAngel float not null, pitchAngel float not null, driftAngel float not null)"))
                     {
                         QMessageBox createErrorMessageBox(QMessageBox::Warning,
                                                           QString::fromUtf8("Error"),
-                                                          QString::fromUtf8("Create Database Error"));
+                                                          createQuery.lastError().text());
                         createErrorMessageBox.exec();
                         QApplication::quit();
                     }
                     else
-                        qDebug() << "success";
+#ifdef QT_DEBUG
+                        qDebug() << "Create success";
+#endif
                 }
             }
         }
         else
         {
             QMessageBox queryErrorMessageBox(QMessageBox::Warning,
-                                              QString::fromUtf8("Error"),
-                                              QString::fromUtf8("Query Error"));
+                                             QString::fromUtf8("Error"),
+                                             tableExistQuery.lastError().text());
             queryErrorMessageBox.exec();
             QApplication::quit();
         }
     }
 }
 
+QSqlDatabase& MainWindow::getDatabase()
+{
+    databaseInit();
+    return database;
+}
 
 MainWindow::~MainWindow()
 {
-    delete historyData;
 }
