@@ -13,7 +13,7 @@ For example accelertion or angle of some devices is out of normal range.
 
 ## Function:
 1. Warning.
-2. Draw a curve.
+2. Draw curves.
 3. Display current data(related to 2).
-4. Support multiple develoment borads connection.
+4. Support multiple development borads connection.
 5. History Data(Not Finished).
