@@ -27,7 +27,7 @@ private:
     QGridLayout *layout;
 signals:
 private slots:
-    void select();
+    void selected();
 };
 
 #endif // HISTORICALDATA_H

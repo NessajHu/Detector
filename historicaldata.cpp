@@ -5,6 +5,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QVariant>
+#include <QMessageBox>
 
 HistoricalData::HistoricalData(QWidget *parent) :
     QWidget(parent),
@@ -28,7 +29,8 @@ HistoricalData::HistoricalData(QWidget *parent) :
     layout->addWidget(selectNode, 8, 2, 1, 1);
     layout->addWidget(sortOrder, 8, 3, 1, 1);
     layout->addWidget(selectButton, 8, 4, 1, 1);
-    
+    selectNode->addItem("");
+    QObject::connect(selectButton, &QPushButton::clicked, this, &HistoricalData::selected);
     /*dataTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     dataTable->verticalHeader()->setVisible(false);
     dataTable->setColumnCount(5);
@@ -58,8 +60,9 @@ HistoricalData::~HistoricalData()
 
 void HistoricalData::show()
 {
-    for(int i = 0; i < selectNode->count(); i++)
-        selectNode->removeItem(0);
+    //remove all items but the empty one
+    for(int i = 0; i < selectNode->count() - 1; i++)
+        selectNode->removeItem(1);
     QString nodeQueryString = "select node from log group by node";
     QSqlQuery nodeQuery(MainWindow::getDatabase());
     if(nodeQuery.exec(nodeQueryString))
@@ -74,11 +77,34 @@ void HistoricalData::show()
     else
         qDebug() << __FILE__ << __func__ << __LINE__ << "error";
 #endif
-    select();
+    tableModel->setFilter("");
+    tableModel->select();
     QWidget::show();
 }
 
-void HistoricalData::select()
+/**
+ * @brief HistoricalData::selected
+ * Calling slot when the selectButton is clicked
+ * select datetime and given node
+ */
+void HistoricalData::selected()
 {
+    if(terminalTime->dateTime() < startingTime->dateTime())
+    {
+#ifdef QT_DEBUG
+        qDebug() << "Terminal time should later than starting time.";
+#endif
+        QMessageBox::critical(nullptr, QString::fromUtf8("Error"), QString::fromUtf8("Terminal time should later than starting time."));
+        return;
+    }
+    QString terminalTimeString = terminalTime->dateTime().toString("yyyy-MM-dd HH:mm:ss.zzz");
+    QString startingTimeString = startingTime->dateTime().toString("yyyy-MM-dd HH:mm:ss.zzz");
+    QString filterString = "time >= '" + startingTimeString + "' and time <= '" + terminalTimeString + "'";
+    if(selectNode->currentIndex() != 0)
+        filterString += " and node = " + QString::number(selectNode->currentData().toInt());
+#ifdef QT_DEBUG
+    qDebug() << filterString;
+#endif
+    tableModel->setFilter(filterString);
     tableModel->select();
 }
