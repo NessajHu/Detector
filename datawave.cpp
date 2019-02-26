@@ -8,11 +8,6 @@
 #include <QDebug>
 #endif
 #include "datahandle.h"
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlError>
-#include "mainwindow.h"
-#include <QMessageBox>
 
 const int DataWave::maxDisplayPoints = 2000;
 
@@ -115,32 +110,15 @@ DataWave::~DataWave()
 void DataWave::getData(int socketDescriptor, QString data)
 {
     DataHandle handler(data);
+    if(static_cast<int>(handler.getData()[0]) != nowNodeDescriptor)
+        return;
 #ifdef QT_DEBUG
     qDebug() << "already recive";
 #endif
-    bool clearFlag = false;
     if(socketDescriptor != nowSocketDescriptor && nowSocketDescriptor != 0)
     {
         nowSocketDescriptor = socketDescriptor;
-        clearFlag = true;
-    }
-    if(nowNodeDescriptor != static_cast<int>(handler.getData()[0]))
-    {
-        nowNodeDescriptor = static_cast<int>(handler.getData()[0]);
-        clearFlag = true;
-    }
-    if(clearFlag)
-    {
-        nowDisplayPoints = 0;
-        accelerationXPoint.clear();
-        accelerationYPoint.clear();
-        accelerationZPoint.clear();
-        gyroscopeXPoint.clear();
-        gyroscopeYPoint.clear();
-        gyroscopeZPoint.clear();
-        rollAngelPoint.clear();
-        pitchAngelPoint.clear();
-        driftAngelPoint.clear();
+        clearCurves();
     }
     nowDisplayPoints += 1;
     if(nowDisplayPoints >= maxDisplayPoints)
@@ -155,30 +133,6 @@ void DataWave::getData(int socketDescriptor, QString data)
         pitchAngelPoint.erase(pitchAngelPoint.begin());
         driftAngelPoint.erase(driftAngelPoint.begin());
     }
-    QSqlDatabase database = MainWindow::getDatabase();
-    QSqlQuery insertQuery(database);
-    QString dateTime = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz");
-    QString insertQueryString = QString("insert into log (time, node, accelerationX,  accelerationY, accelerationZ, temperature, gyroscopeX, gyroscopeY, gyroscopeZ, rollAngel, pitchAngel, driftAngel)"
-                            "values('%1', %2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12)")
-            .arg(dateTime)
-            .arg(nowNodeDescriptor)
-            .arg(static_cast<int>(handler.getData()[1]))
-            .arg(static_cast<int>(handler.getData()[2]))
-            .arg(static_cast<int>(handler.getData()[3]))
-            .arg(handler.getData()[4])
-            .arg(static_cast<int>(handler.getData()[5]))
-            .arg(static_cast<int>(handler.getData()[6]))
-            .arg(static_cast<int>(handler.getData()[7]))
-            .arg(handler.getData()[8])
-            .arg(handler.getData()[9])
-            .arg(handler.getData()[10]);
-    if(!insertQuery.exec(insertQueryString))
-        QMessageBox::critical(nullptr, QString::fromUtf8("Insert Failed"), insertQuery.lastError().text());
-#ifdef QT_DEBUG
-    else {
-        qDebug() << "insert Success";
-    }
-#endif
     accelerationXPoint << QPointF(nowDisplayPoints, handler.getData()[1]);
     accelerationXCurve->setSamples(accelerationXPoint);
     accelerationYPoint << QPointF(nowDisplayPoints, handler.getData()[2]);
@@ -199,4 +153,25 @@ void DataWave::getData(int socketDescriptor, QString data)
     driftAngelCurve->setSamples(driftAngelPoint);
     plot->setAxisScale(QwtPlot::xBottom, 0, nowDisplayPoints + 5);
     plot->replot();
+}
+
+void DataWave::clearCurves()
+{
+    nowDisplayPoints = 0;
+    accelerationXPoint.clear();
+    accelerationYPoint.clear();
+    accelerationZPoint.clear();
+    gyroscopeXPoint.clear();
+    gyroscopeYPoint.clear();
+    gyroscopeZPoint.clear();
+    rollAngelPoint.clear();
+    pitchAngelPoint.clear();
+    driftAngelPoint.clear();
+    plot->replot();
+}
+
+void DataWave::nodeChanged(int newChanged)
+{
+    nowNodeDescriptor = newChanged;
+    clearCurves();
 }

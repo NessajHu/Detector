@@ -44,12 +44,14 @@ private:
     int nowDisplayPoints;
     int nowSocketDescriptor;//it may be deleted
     int nowNodeDescriptor;
+    void clearCurves();
     static const int maxDisplayPoints;
 signals:
 
 public slots:
     void showItemChecked(const QVariant &itemInfo, bool on);
     void getData(int socketDescriptor, QString data);
+    void nodeChanged(int newNode);
 };
 
 #endif // DATAWAVE_H

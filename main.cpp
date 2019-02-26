@@ -16,7 +16,9 @@ int main(int argc, char *argv[])
     MainWindow w(nullptr);
     //HistoricalData historicalData(&w, nullptr);
     //historicalData.hide();
-    
+#ifdef QT_DEBUG
+    qDebug() << "test macro";
+#endif
     w.show();
     return a.exec();
 }

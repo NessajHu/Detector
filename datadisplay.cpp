@@ -1,6 +1,11 @@
 ﻿#include "datadisplay.h"
 #include <QDebug>
 #include "datahandle.h"
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+#include "mainwindow.h"
+#include <QMessageBox>
 
 DataDisplay::DataDisplay(QWidget *parent) :
     QWidget(parent),
@@ -67,7 +72,6 @@ DataDisplay::DataDisplay(QWidget *parent) :
 
     nodeSelectionLabel->setText("Node Selection");
     nodeSelection->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    nodeSelection->addItem("Point1");
     accelerationX->setText("aA");
     accelerationY->setText("aY");
     accelerationZ->setText("aZ");
@@ -98,6 +102,7 @@ DataDisplay::~DataDisplay()
 void DataDisplay::currentNodeChanged(int index)
 {
     nowNode = nodeSelection->itemText(index).toInt();
+    emit nodeChanged(nowNode);
     thermoLabelNum->setText("");
     thermoMetre->setValue(0);
     accelerationXNum->setText("");
@@ -115,11 +120,42 @@ void DataDisplay::getData([[maybe_unused]] int socketDescriptor, QString data)
 {
     DataHandle handler(data);
     int node = static_cast<int>(handler.getData()[0]);
+
     if(!nodeList.contains(node))
     {
+#ifdef QT_DEBUG
+    qDebug() << "node not in the list";
+    for(auto i : nodeList)
+        qDebug() << i << "list";
+#endif
+        nodeList.push_back(node);
         QVariant itemData = node;
         nodeSelection->addItem(QString::number(node), itemData);
     }
+    QSqlDatabase database = MainWindow::getDatabase();
+    QSqlQuery insertQuery(database);
+    QString dateTime = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz");
+    QString insertQueryString = QString("insert into log (time, node, accelerationX,  accelerationY, accelerationZ, temperature, gyroscopeX, gyroscopeY, gyroscopeZ, rollAngel, pitchAngel, driftAngel)"
+                            "values('%1', %2, %3, %4, %5, %6, %7, %8, %9, %10, %11, %12)")
+            .arg(dateTime)
+            .arg(node)
+            .arg(static_cast<int>(handler.getData()[1]))
+            .arg(static_cast<int>(handler.getData()[2]))
+            .arg(static_cast<int>(handler.getData()[3]))
+            .arg(handler.getData()[4])
+            .arg(static_cast<int>(handler.getData()[5]))
+            .arg(static_cast<int>(handler.getData()[6]))
+            .arg(static_cast<int>(handler.getData()[7]))
+            .arg(handler.getData()[8])
+            .arg(handler.getData()[9])
+            .arg(handler.getData()[10]);
+    if(!insertQuery.exec(insertQueryString))
+        QMessageBox::critical(nullptr, QString::fromUtf8("Insert Failed"), insertQuery.lastError().text());
+#ifdef QT_DEBUG
+    else {
+        qDebug() << "insert Success";
+    }
+#endif
     thermoLabelNum->setText(QString::number(handler.getData()[4]));
     thermoMetre->setValue(handler.getData()[4]);
     accelerationXNum->setText(QString::number(handler.getData()[1]));
@@ -131,4 +167,22 @@ void DataDisplay::getData([[maybe_unused]] int socketDescriptor, QString data)
     rollAngelNum->setText(QString::number(handler.getData()[8]));
     pitchAngelNum->setText(QString::number(handler.getData()[9]));
     driftAngelNum->setText(QString::number(handler.getData()[10]));
+}
+
+void DataDisplay::clear()
+{
+    int count = nodeSelection->count();
+    for(int i = 0; i < count; i++)
+        nodeSelection->removeItem(0);
+    thermoLabelNum->setText("");
+    thermoMetre->setValue(0);
+    accelerationXNum->setText("");
+    accelerationYNum->setText("");
+    accelerationZNum->setText("");
+    gyroscopeXNum->setText("");
+    gyroscopeYNum->setText("");
+    gyroscopeZNum->setText("");
+    rollAngel->setText("");
+    pitchAngel->setText("");
+    driftAngel->setText("");
 }

@@ -6,6 +6,8 @@
 
 QString MainWindow::databaseConnection = "DetectorConnection";
 
+QSqlDatabase MainWindow::database = QSqlDatabase::database();
+
 MainWindow::MainWindow(QWidget *parent) :
     QWidget(parent),
     systemOption(new SystemOption(this)),
@@ -31,11 +33,14 @@ MainWindow::MainWindow(QWidget *parent) :
     mainWindowLayout->setHorizontalSpacing(0);
     mainWindowLayout->setContentsMargins(0, 0, 0, 0);
     setLayout(mainWindowLayout);
+#ifdef QT_DEBUG
     qDebug() << "shit";
+#endif
     QObject::connect(statusAnalysis, &StatusAnalysis::callHistoricalData, [=](){historyData->show();});
     //QObject::connect(systemOption, &SystemOption::socketChanged, dataDisplay, &DataDisplay::currentSocketChanged);
     QObject::connect(systemOption->getServer(), &TcpServer::sendData, dataWave, &DataWave::getData);
     QObject::connect(systemOption->getServer(), &TcpServer::sendData, dataDisplay, &DataDisplay::getData);
+    QObject::connect(dataDisplay, &DataDisplay::nodeChanged, dataWave, &DataWave::nodeChanged);
     databaseInit();
 }
 
@@ -77,8 +82,8 @@ void MainWindow::databaseInit()
                         createErrorMessageBox.exec();
                         QApplication::quit();
                     }
-                    else
 #ifdef QT_DEBUG
+                    else
                         qDebug() << "Create success";
 #endif
                 }

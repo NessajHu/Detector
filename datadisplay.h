@@ -10,6 +10,7 @@
 
 class DataDisplay : public QWidget
 {
+    Q_OBJECT
 public:
     DataDisplay(QWidget *parent = nullptr);
     ~DataDisplay();
@@ -47,6 +48,7 @@ public slots:
 private slots:
     void currentSocketChanged(QTcpSocket *currentSocket);
     void currentNodeChanged(int index);
+    void clear();
 };
 
 #endif // DATADISPLAY_H

@@ -8,7 +8,7 @@
 #include "statusanalysis.h"
 #include <QFont>
 #include <QGridLayout>
-#include <QtSql/QSqlDatabase>
+#include <QSqlDatabase>
 #include <QApplication>
 #include "historicaldata.h"
 

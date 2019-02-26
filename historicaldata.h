@@ -2,9 +2,12 @@
 #define HISTORICALDATA_H
 
 #include <QWidget>
-#include <QTableWidget>
+#include <QTableView>
 #include <QComboBox>
 #include <QDateTimeEdit>
+#include <QSqlTableModel>
+#include <QGridLayout>
+#include <QPushButton>
 
 class HistoricalData : public QWidget
 {
@@ -13,11 +16,14 @@ public:
     HistoricalData(QWidget *parent = nullptr);
     ~HistoricalData();
 private:
-    QTableWidget *dataTable;
-    QComboBox *selectBox;
+    QSqlTableModel *tableModel;
+    QTableView *dataTable;
+    QComboBox *selectNode;
     QComboBox *sortOrder;
     QDateTimeEdit *startingTime;
     QDateTimeEdit *terminalTime;
+    QPushButton *selectButton;
+    QGridLayout *layout;
 signals:
 
 public slots:
