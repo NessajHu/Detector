@@ -15,6 +15,7 @@ class HistoricalData : public QWidget
 public:
     HistoricalData(QWidget *parent = nullptr);
     ~HistoricalData();
+    void show();
 private:
     QSqlTableModel *tableModel;
     QTableView *dataTable;
@@ -25,8 +26,8 @@ private:
     QPushButton *selectButton;
     QGridLayout *layout;
 signals:
-
-public slots:
+private slots:
+    void select();
 };
 
 #endif // HISTORICALDATA_H

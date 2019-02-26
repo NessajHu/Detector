@@ -3,6 +3,8 @@
 #include "QHeaderView"
 #include "mainwindow.h"
 #include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QVariant>
 
 HistoricalData::HistoricalData(QWidget *parent) :
     QWidget(parent),
@@ -26,6 +28,7 @@ HistoricalData::HistoricalData(QWidget *parent) :
     layout->addWidget(selectNode, 8, 2, 1, 1);
     layout->addWidget(sortOrder, 8, 3, 1, 1);
     layout->addWidget(selectButton, 8, 4, 1, 1);
+    
     /*dataTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     dataTable->verticalHeader()->setVisible(false);
     dataTable->setColumnCount(5);
@@ -51,4 +54,31 @@ HistoricalData::HistoricalData(QWidget *parent) :
 HistoricalData::~HistoricalData()
 {
 
+}
+
+void HistoricalData::show()
+{
+    for(int i = 0; i < selectNode->count(); i++)
+        selectNode->removeItem(0);
+    QString nodeQueryString = "select node from log group by node";
+    QSqlQuery nodeQuery(MainWindow::getDatabase());
+    if(nodeQuery.exec(nodeQueryString))
+    {
+        while(nodeQuery.next())
+        {
+            QVariant node = nodeQuery.value(0).toInt();
+            selectNode->addItem(QString::number(nodeQuery.value(0).toInt()), node);
+        }
+    }
+#ifdef QT_DEBUG
+    else
+        qDebug() << __FILE__ << __func__ << __LINE__ << "error";
+#endif
+    select();
+    QWidget::show();
+}
+
+void HistoricalData::select()
+{
+    tableModel->select();
 }
