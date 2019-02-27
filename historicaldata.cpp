@@ -13,6 +13,8 @@ HistoricalData::HistoricalData(QWidget *parent) :
     dataTable(new QTableView(this)),
     selectNode(new QComboBox(this)),
     sortOrder(new QComboBox(this)),
+    startingTimeLabel(new QLabel(this)),
+    terminalTimeLabel(new QLabel(this)),
     startingTime(new QDateTimeEdit(this)),
     terminalTime(new QDateTimeEdit(this)),
     selectButton(new QPushButton(this)),
@@ -23,14 +25,33 @@ HistoricalData::HistoricalData(QWidget *parent) :
     tableModel->setEditStrategy(QSqlTableModel::OnFieldChange);
     tableModel->select();
     dataTable->setModel(tableModel);
-    layout->addWidget(dataTable, 0, 0, 8, 5);
-    layout->addWidget(startingTime, 8, 0, 1, 1);
-    layout->addWidget(terminalTime, 8, 1, 1, 1);
-    layout->addWidget(selectNode, 8, 2, 1, 1);
-    layout->addWidget(sortOrder, 8, 3, 1, 1);
-    layout->addWidget(selectButton, 8, 4, 1, 1);
     selectNode->addItem("");
+    sortOrder->addItem("Ascending Order");
+    sortOrder->addItem("Descending Order");
     QObject::connect(selectButton, &QPushButton::clicked, this, &HistoricalData::selected);
+    if(sortOrder->currentText() == "Ascending Order")
+        tableModel->sort(1, Qt::AscendingOrder);
+    else
+        tableModel->sort(1, Qt::DescendingOrder);
+    QObject::connect(sortOrder, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged), [&](const QString &currentString){
+        if(currentString == "Ascending Order")
+            tableModel->sort(1, Qt::AscendingOrder);
+        else
+            tableModel->sort(1, Qt::DescendingOrder);
+#ifdef QT_DEBUG
+        qDebug() << currentString << "   now Order";
+#endif
+    });
+    startingTimeLabel->setText("Start");
+    terminalTimeLabel->setText("Terminal");
+    layout->addWidget(dataTable, 0, 0, 8, 7);
+    layout->addWidget(startingTimeLabel, 8, 0, 1, 1);
+    layout->addWidget(startingTime, 8, 1, 1, 1);
+    layout->addWidget(terminalTimeLabel, 8, 2, 1, 1);
+    layout->addWidget(terminalTime, 8, 3, 1, 1);
+    layout->addWidget(selectNode, 8, 4, 1, 1);
+    layout->addWidget(sortOrder, 8, 5, 1, 1);
+    layout->addWidget(selectButton, 8, 6, 1, 1);
     /*dataTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     dataTable->verticalHeader()->setVisible(false);
     dataTable->setColumnCount(5);

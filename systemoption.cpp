@@ -41,7 +41,9 @@ SystemOption::SystemOption(QWidget *parent) :
     getIp->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
     getIp->setFocusPolicy(Qt::NoFocus);
     QObject::connect(server, &TcpServer::newSocketConnected, this, &SystemOption::comboBoxAddItem);
+    QObject::connect(server, &TcpServer::newSocketConnected, [&](){serverStatus->setText("Connecting");});
     QObject::connect(server, &TcpServer::socketDisconnected, this, &SystemOption::comboBoxDeleteItem);
+    QObject::connect(server, &TcpServer::socketDisconnected, [&](){serverStatus->setText("Listening Port" + QString::number(port));});
     getPort->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
     QIntValidator *getPortValidator = new QIntValidator(0, 65535, getPort);
     getPort->setValidator(getPortValidator);
@@ -49,7 +51,7 @@ SystemOption::SystemOption(QWidget *parent) :
     listen->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
     linkStatusLabel->setText("Link to");
     serverStatusLabel->setText("Sever Status");
-    serverStatus->setText("Listening Port *****");
+    serverStatus->setText("Unconnected");
     systemOptionLayout->addWidget(comLabel, 0, 0, 1, 1, Qt::AlignVCenter);
     systemOptionLayout->addWidget(baudRateLabel, 0, 1, 1, 1, Qt::AlignVCenter);
     systemOptionLayout->addWidget(comComboBox, 1, 0, 1, 1, Qt::AlignVCenter);
@@ -90,6 +92,7 @@ void SystemOption::newlisten()
         server->close();
     port = getPort->text().toInt();
     server->listen(QHostAddress::Any, static_cast<quint16>(port));
+    serverStatus->setText("Listening Port" + QString::number(port));
 }
 
 SystemOption::~SystemOption()

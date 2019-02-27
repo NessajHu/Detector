@@ -8,6 +8,7 @@
 #include <QSqlTableModel>
 #include <QGridLayout>
 #include <QPushButton>
+#include <QLabel>
 
 class HistoricalData : public QWidget
 {
@@ -21,6 +22,8 @@ private:
     QTableView *dataTable;
     QComboBox *selectNode;
     QComboBox *sortOrder;
+    QLabel *startingTimeLabel;
+    QLabel *terminalTimeLabel;
     QDateTimeEdit *startingTime;
     QDateTimeEdit *terminalTime;
     QPushButton *selectButton;
