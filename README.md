@@ -12,8 +12,8 @@ Detector can warning when the device occurres expcetion.
 For example accelertion or angle of some devices is out of normal range.   
 
 ## Function:
-1. Warning.
+1. Warning(Algorithm not finished).
 2. Draw curves.
 3. Display current data(related to 2).
-4. Support multiple development borads connection.
-5. History Data(Not Finished).
+4. Support development borad multi-nodes connections.
+5. History Data.
